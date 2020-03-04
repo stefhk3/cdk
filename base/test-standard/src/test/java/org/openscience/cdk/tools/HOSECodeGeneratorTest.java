@@ -53,6 +53,18 @@ public class HOSECodeGeneratorTest extends CDKTestCase {
 
     static boolean standAlone = false;
 
+    @Test
+    public void testSecondSphereOrderingX() throws Exception {
+        String filename = "data/mdl/hosesecondspherewronglyordered.mol";
+        InputStream ins = this.getClass().getClassLoader().getResourceAsStream(filename);
+        MDLV2000Reader reader = new MDLV2000Reader(ins, Mode.STRICT);
+        IAtomContainer mol1 = reader.read(DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainer.class));
+        reader.close();
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol1);
+        Aromaticity.cdkLegacy().apply(mol1);
+        Assert.assertEquals("C-4;CCC(CY,CY,/)//",new HOSECodeGenerator().getHOSECode(mol1, mol1.getAtom(3), 6));
+    }
+
     /**
      * @cdk.bug 968852
      */
