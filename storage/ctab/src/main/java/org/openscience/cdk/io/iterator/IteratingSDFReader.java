@@ -321,7 +321,7 @@ public class IteratingSDFReader extends DefaultIteratingChemObjectReader<IAtomCo
                     m.setProperty(dataHeader, data);
                 }
             } else {
-                break;
+            	currentLine = input.readLine();
             }
         }
     }

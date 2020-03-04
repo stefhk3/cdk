@@ -1519,8 +1519,6 @@ public class MDLV2000Reader extends DefaultChemObjectReader {
             default:
                 return 0;
         }
-        if (index+1 == line.length())
-            return sign * result;
         switch ((c = line.charAt(index + 1))) {
             case ' ':
                 if (result > 0) return sign * result;
@@ -1544,11 +1542,13 @@ public class MDLV2000Reader extends DefaultChemObjectReader {
             default:
                 return sign * result;
         }
-        if (index+2 == line.length())
-            return sign * result;
         switch ((c = line.charAt(index + 2))) {
             case ' ':
                 if (result > 0) return sign * result;
+                break;
+            case '-':
+                if (result > 0) return sign * result;
+                sign = -1;
                 break;
             case '0':
             case '1':
@@ -1579,13 +1579,16 @@ public class MDLV2000Reader extends DefaultChemObjectReader {
      */
     static void label(final IAtomContainer container, final int index, final String label) {
         final IAtom atom = container.getAtom(index);
+        IAtom aliasAtom = container.getAtom(index);
+        aliasAtom.setProperty("label",label);
+        /*final IPseudoAtom pseudoAtom = atom instanceof IPseudoAtom ? (IPseudoAtom) atom : container.getBuilder()
         final IPseudoAtom pseudoAtom = atom instanceof IPseudoAtom ? (IPseudoAtom) atom : container.getBuilder()
                 .newInstance(IPseudoAtom.class);
         if (atom.equals(pseudoAtom)) {
             pseudoAtom.setLabel(label);
         } else {
             pseudoAtom.setSymbol(label);
-            pseudoAtom.setAtomicNumber(atom.getAtomicNumber());
+            pseudoAtom.setAtomicNumber(0);
             pseudoAtom.setPoint2d(atom.getPoint2d());
             pseudoAtom.setPoint3d(atom.getPoint3d());
             pseudoAtom.setMassNumber(atom.getMassNumber());
@@ -1594,7 +1597,7 @@ public class MDLV2000Reader extends DefaultChemObjectReader {
             pseudoAtom.setLabel(label);
             // XXX: would be faster to track all replacements and do it all in one
             AtomContainerManipulator.replaceAtomByAtom(container, atom, pseudoAtom);
-        }
+        }*/
     }
 
     /**
@@ -1922,7 +1925,6 @@ public class MDLV2000Reader extends DefaultChemObjectReader {
                 }
 
                 IAtom newPseudoAtom = container.getBuilder().newInstance(IPseudoAtom.class, alias);
-                newPseudoAtom.setAtomicNumber(aliasAtom.getAtomicNumber());
                 if (aliasAtom.getPoint2d() != null) newPseudoAtom.setPoint2d(aliasAtom.getPoint2d());
                 if (aliasAtom.getPoint3d() != null) newPseudoAtom.setPoint3d(aliasAtom.getPoint3d());
                 AtomContainerManipulator.replaceAtomByAtom(container, aliasAtom, newPseudoAtom);

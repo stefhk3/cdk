@@ -415,6 +415,7 @@ public class MDLV2000Writer extends DefaultChemObjectWriter {
         writer.write('\n');
 
         // write Atom block
+        StringBuffer aliaslines=new StringBuffer();
         for (int f = 0; f < container.getAtomCount(); f++) {
             IAtom atom = container.getAtom(f);
             line.setLength(0);
@@ -519,6 +520,10 @@ public class MDLV2000Writer extends DefaultChemObjectWriter {
                 line.append(formatMDLInt(atomprops[i], 3));
             line.append('\n');
             writer.write(line.toString());
+        	if(atom.getProperty("label")!=null){
+        	    aliaslines.append("A  ").append(formatMDLString(Integer.toString(f+1), 3)).append("\n");
+        	    aliaslines.append((String)atom.getProperty("label")).append("\n");
+        	}
         }
 
         // write Bond block
@@ -742,7 +747,7 @@ public class MDLV2000Writer extends DefaultChemObjectWriter {
             }
 
         }
-
+        writer.write(aliaslines.toString());
         // write atom aliases
         if (aliases != null) {
 
@@ -1174,7 +1179,7 @@ public class MDLV2000Writer extends DefaultChemObjectWriter {
         forceWriteAs2DCoords = addSetting(new BooleanIOSetting(OptForceWriteAs2DCoordinates, IOSetting.Importance.LOW,
                                                                "Should coordinates always be written as 2D?", "false"));
         writeMajorIsotopes = addSetting(new BooleanIOSetting(OptWriteMajorIsotopes, IOSetting.Importance.LOW,
-                                                             "Write atomic mass of any non-null atomic mass including major isotopes (e.g. [12]C)", "true"));
+                                                             "Write atomic mass of any non-null atomic mass including major isotopes (e.g. [12]C)", "false"));
         writeAromaticBondTypes = addSetting(new BooleanIOSetting(OptWriteAromaticBondTypes, IOSetting.Importance.LOW,
                                                                  "Should aromatic bonds be written as bond type 4?", "false"));
         writeQueryFormatValencies = addSetting(new BooleanIOSetting(OptWriteQueryFormatValencies,
