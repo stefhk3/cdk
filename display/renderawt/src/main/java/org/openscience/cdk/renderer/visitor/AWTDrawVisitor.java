@@ -22,6 +22,7 @@ import org.openscience.cdk.renderer.RendererModel;
 import org.openscience.cdk.renderer.elements.ArrowElement;
 import org.openscience.cdk.renderer.elements.AtomSymbolElement;
 import org.openscience.cdk.renderer.elements.Bounds;
+import org.openscience.cdk.renderer.elements.CircularArrowElement;
 import org.openscience.cdk.renderer.elements.ElementGroup;
 import org.openscience.cdk.renderer.elements.GeneralPath;
 import org.openscience.cdk.renderer.elements.IRenderingElement;
@@ -56,6 +57,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.HashMap;
@@ -522,6 +524,16 @@ public class AWTDrawVisitor extends AbstractAWTDrawVisitor {
         };
     }
 
+    
+    private void visit(CircularArrowElement arrow){
+        int[] start = this.transformPoint(arrow.startX, arrow.startY);
+        int[] end = this.transformPoint(arrow.endX, arrow.endY);
+        int[] center = this.transformPoint(arrow.centreX, arrow.centreY);
+    	QuadCurve2D curve=new QuadCurve2D.Double(start[0], start[1], center[0], center[1], end[0], end[1]);
+    	graphics.setColor(arrow.color);
+    	graphics.draw(curve);
+    }
+
     private void visit(ArrowElement line) {
         double scale = rendererModel.getParameter(Scale.class).getValue();
         Stroke savedStroke = graphics.getStroke();
@@ -654,6 +666,8 @@ public class AWTDrawVisitor extends AbstractAWTDrawVisitor {
             visit((GeneralPath) element);
         else if (element instanceof ArrowElement)
             visit((ArrowElement) element);
+        else if (element instanceof CircularArrowElement)
+            visit((CircularArrowElement) element);
         else if (element instanceof Bounds) {
             visit(((Bounds) element).root());
         } else if (element instanceof MarkedElement) {

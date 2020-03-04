@@ -29,6 +29,8 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.renderer.RendererModel;
+import org.openscience.cdk.renderer.RendererModel.ColorHash;
+import org.openscience.cdk.renderer.RendererModel.ExternalHighlightColor;
 import org.openscience.cdk.renderer.color.CDK2DAtomColors;
 import org.openscience.cdk.renderer.color.IAtomColorer;
 import org.openscience.cdk.renderer.elements.AtomSymbolElement;
@@ -37,6 +39,7 @@ import org.openscience.cdk.renderer.elements.IRenderingElement;
 import org.openscience.cdk.renderer.elements.MarkedElement;
 import org.openscience.cdk.renderer.elements.OvalElement;
 import org.openscience.cdk.renderer.elements.RectangleElement;
+import org.openscience.cdk.renderer.generators.BasicAtomGenerator.AtomRadius;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator.Scale;
 import org.openscience.cdk.renderer.generators.parameter.AbstractGeneratorParameter;
 import org.openscience.cdk.validate.ProblemMarker;
@@ -48,6 +51,8 @@ import org.openscience.cdk.validate.ProblemMarker;
  * @cdk.githash
  */
 public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
+	
+	public final static String IDENTIFIER="identifier";
 
     /** Class to hold the color by which atom labels are drawn.
      *  This color is overwritten by the {@link IAtomColorer}. */
@@ -215,7 +220,12 @@ public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
     @Override
     public IRenderingElement generate(IAtomContainer container, RendererModel model) {
         ElementGroup elementGroup = new ElementGroup();
+        double radius = (Double) model.get(AtomRadius.class) / model.getParameter(Scale.class).getValue();
+        radius=radius + radius/4;
         for (IAtom atom : container.atoms()) {
+        	if(model.getExternalSelectedPart()!=null && model.getExternalSelectedPart().contains(atom)){
+            	elementGroup.add(new OvalElement(atom.getPoint2d().x, atom.getPoint2d().y, radius*1.5, model.getParameter(ColorHash.class).getValue().get(atom)));
+        	}
             elementGroup.add(MarkedElement.markupAtom(this.generate(container, atom, model), atom));
         }
         return elementGroup;
@@ -287,6 +297,9 @@ public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
      * @return true if the atom should be drawn
      */
     protected boolean canDraw(IAtom atom, IAtomContainer container, RendererModel model) {
+    	//if there is an identifier we always draw
+    	if(atom.getProperty(IDENTIFIER)!=null && !(Boolean) model.get(CompactAtom.class))
+    		return true;
         // don't draw atoms without coordinates
         if (!hasCoordinates(atom)) {
             return false;
@@ -314,7 +327,7 @@ public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
      * @return a rendering element, or group of elements
      */
     public IRenderingElement generate(IAtomContainer atomContainer, IAtom atom, RendererModel model) {
-        if (!canDraw(atom, atomContainer, model)) {
+        if (!canDraw(atom, atomContainer, model) && (model.getExternalSelectedPart()==null || !model.getExternalSelectedPart().contains(atom))) {
             return null;
         } else if ((Boolean) model.get(CompactAtom.class)) {
             return this.generateCompactElement(atom, model);
@@ -326,7 +339,7 @@ public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
                 alignment = GeometryUtil.getBestAlignmentForLabelXY(atomContainer, atom);
             }
 
-            return generateElement(atom, alignment, model);
+            return generateElement(atom, alignment, model, atomContainer);
         }
     }
 
@@ -341,10 +354,26 @@ public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
     public IRenderingElement generateCompactElement(IAtom atom, RendererModel model) {
         Point2d point = atom.getPoint2d();
         double radius = (Double) model.get(AtomRadius.class) / model.getParameter(Scale.class).getValue();
+        radius=radius + radius/4;
+        double radiussmall = ((Double) model.get(AtomRadius.class)-1) / model.getParameter(Scale.class).getValue();
         double distance = 2 * radius;
-        if (model.get(CompactShape.class) == Shape.SQUARE) {
-            return new RectangleElement(point.x - radius, point.y - radius, distance, distance, true, getAtomColor(
+        double distancesmall = distance/1.4;
+        
+        if(model.getExternalSelectedPart()!=null && model.getExternalSelectedPart().contains(atom)){
+        	//Color color = model.getParameter(ColorHash.class).getValue().get(atom);
+        	//if (color != null) {
+        	return new OvalElement(atom.getPoint2d().x, atom.getPoint2d().y, radius*1.5, model.getParameter(ExternalHighlightColor.class).getValue());
+        }else if (model.get(CompactShape.class) == Shape.SQUARE) {
+        	if(atom.getSymbol().equals("H")){
+        		ElementGroup elementGroup = new ElementGroup();
+                elementGroup.add(new RectangleElement(point.x - radius, point.y - radius, distance, distance, true, getAtomColor(
+                        atom, model)));
+                elementGroup.add(new RectangleElement(point.x - radiussmall, point.y - radiussmall, distancesmall, distancesmall, true, Color.WHITE));
+                return elementGroup;
+        	}else{
+        		return new RectangleElement(point.x - radius, point.y - radius, distance, distance, true, getAtomColor(
                     atom, model));
+        	}
         } else {
             return new OvalElement(point.x, point.y, radius, true, getAtomColor(atom, model));
         }
@@ -358,12 +387,15 @@ public class BasicAtomGenerator implements IGenerator<IAtomContainer> {
      * @param model the renderer model
      * @return an atom symbol element
      */
-    public AtomSymbolElement generateElement(IAtom atom, int alignment, RendererModel model) {
-        String text;
+    public AtomSymbolElement generateElement(IAtom atom, int alignment, RendererModel model, IAtomContainer container) {
+        String text="";
         if (atom instanceof IPseudoAtom) {
             text = ((IPseudoAtom) atom).getLabel();
         } else {
-            text = atom.getSymbol();
+        	if(!atom.getSymbol().equals("C") || showCarbon(atom, container, model))
+        		text = atom.getSymbol();
+        	if(atom.getProperty(IDENTIFIER)!=null)
+        		text += " "+(String)atom.getProperty(IDENTIFIER);
         }
         return new AtomSymbolElement(atom.getPoint2d().x, atom.getPoint2d().y, text, atom.getFormalCharge(),
                 atom.getImplicitHydrogenCount(), alignment, getAtomColor(atom, model));
