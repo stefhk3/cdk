@@ -423,10 +423,12 @@ public final class MDLV3000Writer extends DefaultChemObjectWriter {
                 endIdx = tmp;
             }
 
-            final int order = bond.getOrder() == null ? 0 : bond.getOrder().numeric();
+            int order = bond.getOrder() == null ? 0 : bond.getOrder().numeric();
 
             if (order < 1 || order > 3)
                 throw new CDKException("Bond order " + bond.getOrder() + " cannot be written to V3000");
+            if(stereo == IBond.Stereo.COORDINATION)
+            	order=9;
 
             writer.write(++bondIdx)
                   .write(' ')

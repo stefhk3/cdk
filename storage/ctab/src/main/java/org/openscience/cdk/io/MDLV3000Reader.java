@@ -183,7 +183,7 @@ public class MDLV3000Reader extends DefaultChemObjectReader {
             // XXX: slow method is slow
             int valence = 0;
             for (IBond bond : readData.getConnectedBondsList(atom)) {
-                if (bond instanceof IQueryBond || bond.getOrder() == IBond.Order.UNSET) {
+                if (bond instanceof IQueryBond || bond.getOrder() == IBond.Order.UNSET || bond.getOrder()==null) {
                     valence = -1;
                     break;
                 }
@@ -416,7 +416,11 @@ public class MDLV3000Reader extends DefaultChemObjectReader {
                 try {
                     String orderString = tokenizer.nextToken();
                     int order = Integer.parseInt(orderString);
-                    if (order >= 4) {
+                    if(order==9) {
+                    	bond.setOrder(BondManipulator.createBondOrder(1));
+                    	bond.setStereo(IBond.Stereo.COORDINATION);
+                    }
+                    else if (order >= 4) {
                         logger.warn("Query order types are not supported (yet). File a bug if you need it");
                     } else {
                         bond.setOrder(BondManipulator.createBondOrder((double) order));

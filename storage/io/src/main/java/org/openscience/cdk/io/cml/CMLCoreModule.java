@@ -138,6 +138,7 @@ public class CMLCoreModule implements ICMLModule {
     protected List<String>                     bondDictRefs;
     protected List<String>                     bondElid;
     protected List<Boolean>                    bondAromaticity;
+    protected List<Boolean>                    coordinationBonds;
     protected Map<String, Map<String, String>> bondCustomProperty;
     protected boolean                          stereoGiven;
     protected String                           inchi;
@@ -214,6 +215,7 @@ public class CMLCoreModule implements ICMLModule {
             this.parityARef4 = conv.parityARef4;
             this.atomDictRefs = conv.atomDictRefs;
             this.atomAromaticities = conv.atomAromaticities;
+            this.coordinationBonds = conv.coordinationBonds;
             this.spinMultiplicities = conv.spinMultiplicities;
             this.occupancies = conv.occupancies;
             this.bondCounter = conv.bondCounter;
@@ -313,6 +315,7 @@ public class CMLCoreModule implements ICMLModule {
         bondDictRefs = new ArrayList<String>();
         bondElid = new ArrayList<String>();
         bondAromaticity = new ArrayList<Boolean>();
+        coordinationBonds = new ArrayList<Boolean>();
     }
 
     /**
@@ -597,6 +600,7 @@ public class CMLCoreModule implements ICMLModule {
             for (int i = 0; i < atts.getLength(); i++) {
                 if (atts.getQName(i).equals("dictRef")) {
                     if (atts.getValue(i).equals("cdk:aromaticBond")) bondAromaticity.add(Boolean.TRUE);
+                    if (atts.getValue(i).equals("cdk:coordinationBond")) coordinationBonds.add(Boolean.TRUE);
                 }
             }
         } else if ("molecule".equals(name)) {
@@ -703,6 +707,7 @@ public class CMLCoreModule implements ICMLModule {
             if (!stereoGiven) bondStereo.add("");
             if (bondCounter > bondDictRefs.size()) bondDictRefs.add(null);
             if (bondCounter > bondAromaticity.size()) bondAromaticity.add(null);
+            if (bondCounter > coordinationBonds.size()) coordinationBonds.add(null);
         } else if ("atom".equals(name)) {
             if (atomCounter > eltitles.size()) {
                 eltitles.add(null);
@@ -1563,6 +1568,7 @@ public class CMLCoreModule implements ICMLModule {
             Iterator<String> bar2s = bondARef2.iterator();
             Iterator<String> stereos = bondStereo.iterator();
             Iterator<Boolean> aroms = bondAromaticity.iterator();
+            Iterator<Boolean> coords = coordinationBonds.iterator();
 
             while (bar1s.hasNext()) {
                 //                cdo.startObject("Bond");
@@ -1614,6 +1620,15 @@ public class CMLCoreModule implements ICMLModule {
                         currentBond.setStereo(IBond.Stereo.UP);
                     } else if (nextStereo != null && !nextStereo.isEmpty()) {
                         logger.warn("Cannot interpret bond display information: '" + nextStereo + "'");
+                    }
+                }
+
+                if (coords.hasNext()) {
+                    //                    cdo.setObjectProperty("Bond", "stereo",
+                    //                                          (String)stereos.next());
+                    Object nextStereo = coords.next();
+                    if (nextStereo != null && ((boolean) nextStereo)) {
+                        currentBond.setStereo(IBond.Stereo.COORDINATION);
                     }
                 }
 

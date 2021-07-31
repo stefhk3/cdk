@@ -168,6 +168,19 @@ public final class Bounds implements IRenderingElement {
                 add(lineElem.secondPointX + vec.x + ortho.x, lineElem.secondPointY + vec.y + ortho.y);
                 add(lineElem.firstPointX - vec.x - ortho.x, lineElem.firstPointY - vec.y - ortho.y);
                 add(lineElem.secondPointX + vec.x - ortho.x, lineElem.secondPointY + vec.y - ortho.y);
+            } else if (element instanceof ArrowElement) {
+            	ArrowElement lineElem = (ArrowElement) element;
+                Vector2d vec = new Vector2d(lineElem.endX-lineElem.startX,
+                                            lineElem.endY-lineElem.startY);
+                Vector2d ortho = new Vector2d(-vec.y, vec.x);
+                ortho.normalize();
+                vec.normalize();
+                ortho.scale(lineElem.width / 2);  // stroke width
+                vec.scale(lineElem.width / 2);    // stroke rounded also makes line longer
+                add(lineElem.startX - vec.x + ortho.x, lineElem.startY - vec.y + ortho.y);
+                add(lineElem.startY + vec.x + ortho.x, lineElem.endY + vec.y + ortho.y);
+                add(lineElem.startX - vec.x - ortho.x, lineElem.startY - vec.y - ortho.y);
+                add(lineElem.startY + vec.x - ortho.x, lineElem.endY + vec.y - ortho.y);
             } else if (element instanceof OvalElement) {
                 OvalElement oval = (OvalElement) element;
                 add(oval.xCoord - oval.radius, oval.yCoord);

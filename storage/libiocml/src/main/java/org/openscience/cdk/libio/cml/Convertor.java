@@ -703,10 +703,14 @@ public class Convertor {
             cmlBond.appendChild(bType);
         }
 
-        if (cdkBond.getStereo() == IBond.Stereo.UP || cdkBond.getStereo() == IBond.Stereo.DOWN) {
+        if (cdkBond.getStereo() == IBond.Stereo.UP || cdkBond.getStereo() == IBond.Stereo.DOWN || cdkBond.getStereo() == IBond.Stereo.COORDINATION) {
             CMLBondStereo bondStereo = new CMLBondStereo();
             this.checkPrefix(bondStereo);
-            if (cdkBond.getStereo() == IBond.Stereo.UP) {
+            if (cdkBond.getStereo() == IBond.Stereo.COORDINATION) {
+            	CMLBondType bType = new CMLBondType();
+                bType.setDictRef("cdk:coordinationBond");
+                cmlBond.appendChild(bType);
+            }else if (cdkBond.getStereo() == IBond.Stereo.UP) {
                 bondStereo.setDictRef("cml:W");
                 bondStereo.setXMLContent("W");
             } else {

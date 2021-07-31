@@ -50,6 +50,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
@@ -57,6 +58,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -535,6 +537,19 @@ public class AWTDrawVisitor extends AbstractAWTDrawVisitor {
     }
 
     private void visit(ArrowElement line) {
+        /*Vector2d normal = new Vector2d(line.startY - line.endY, line.endX - line.startX);
+        normal.normalize();
+        normal.scale(rendererModel.getParameter(ArrowHeadWidth.class).getValue()
+                / rendererModel.getParameter(Scale.class).getValue());
+
+        Vector2d normal2 = new Vector2d(line.endX - line.startX, line.endY - line.startY);
+        normal2.normalize();
+        normal2.scale(rendererModel.getParameter(ArrowHeadWidth.class).getValue()
+                / rendererModel.getParameter(Scale.class).getValue());    */	
+    	
+    	int arrowwidth = (int)(rendererModel.getParameter(ArrowHeadWidth.class).getValue()
+                / rendererModel.getParameter(Scale.class).getValue());
+    	
         double scale = rendererModel.getParameter(Scale.class).getValue();
         Stroke savedStroke = graphics.getStroke();
 
@@ -551,17 +566,53 @@ public class AWTDrawVisitor extends AbstractAWTDrawVisitor {
         int[] a = this.transformPoint(line.startX, line.startY);
         int[] b = this.transformPoint(line.endX, line.endY);
         graphics.drawLine(a[0], a[1], b[0], b[1]);
-        double aW = rendererModel.getParameter(ArrowHeadWidth.class).getValue() / scale;
-        if (line.direction) {
-            int[] c = this.transformPoint(line.startX - aW, line.startY - aW);
-            int[] d = this.transformPoint(line.startX - aW, line.startY + aW);
+        Polygon arrowHead = new Polygon();  
+    	arrowHead.addPoint( 0,25);
+    	arrowHead.addPoint( -25, -25);
+    	arrowHead.addPoint( 25,-25);
+
+    	if (line.direction) {
+        	AffineTransform tx = new AffineTransform();
+        	tx.setToIdentity();
+        	double angle = Math.atan2(a[1]-b[1], a[0]-b[0]);
+    	    tx.translate(a[0], a[1]);
+    	    tx.rotate((angle-Math.PI/2d));  
+    	    AffineTransform txold=graphics.getTransform();
+    	    graphics.setTransform(tx);   
+    	    graphics.fill(arrowHead);
+    	    graphics.setTransform(txold);
+    	    // make arrow heads
+            /*Point2d vertexB = new Point2d(line.endX, line.endY);
+            Point2d vertexC = new Point2d(vertexB);
+            vertexB.add(normal);
+            vertexB.sub(normal2);
+            vertexC.sub(normal);
+            vertexC.sub(normal2);
+            int[] c = this.transformPoint(vertexB.x, vertexB.y);
+            int[] d = this.transformPoint(vertexC.x, vertexB.y);
             graphics.drawLine(a[0], a[1], c[0], c[1]);
-            graphics.drawLine(a[0], a[1], d[0], d[1]);
+            graphics.drawLine(a[0], a[1], d[0], d[1]);*/
         } else {
-            int[] c = this.transformPoint(line.endX + aW, line.endY - aW);
-            int[] d = this.transformPoint(line.endX + aW, line.endY + aW);
+        	AffineTransform tx = new AffineTransform();
+        	tx.setToIdentity();
+        	double angle = Math.atan2(b[1]-a[1], b[0]-a[0]);
+    	    tx.translate(b[0], b[1]);
+    	    tx.rotate((angle-Math.PI/2d));  
+    	    AffineTransform txold=graphics.getTransform();
+    	    graphics.setTransform(tx);   
+    	    graphics.fill(arrowHead);
+    	    graphics.setTransform(txold);
+            // make arrow heads
+            /*Point2d vertexB = new Point2d(line.startX, line.startY);
+            Point2d vertexC = new Point2d(vertexB);
+            vertexB.add(normal);
+            vertexB.add(normal2);
+            vertexC.sub(normal);
+            vertexC.add(normal2);
+            int[] c = this.transformPoint(vertexB.x, vertexB.y);
+            int[] d = this.transformPoint(vertexC.x, vertexB.y);
             graphics.drawLine(b[0], b[1], c[0], c[1]);
-            graphics.drawLine(b[0], b[1], d[0], d[1]);
+            graphics.drawLine(b[0], b[1], d[0], d[1]);*/
         }
         graphics.setStroke(savedStroke);
     }

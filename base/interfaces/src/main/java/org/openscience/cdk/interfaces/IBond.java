@@ -128,7 +128,9 @@ public interface IBond extends IElectronContainer {
          * Indication that this double bond has a fixed configuration, defined
          * by the 2D and/or 3D coordinates.
          */
-        E_Z_BY_COORDINATES
+        E_Z_BY_COORDINATES,
+        
+        COORDINATION
     }
 
     /**
