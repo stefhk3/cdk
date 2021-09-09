@@ -1,0 +1,159 @@
+/* Copyright (C) 2012  Egon Willighagen <egonw@users.sf.net>
+ *
+ * Contact: cdk-devel@lists.sourceforge.net
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version. All we ask is that proper credit is given for our work,
+ * which includes - but is not limited to - adding the above copyright notice to
+ * the beginning of your source code files, and to any copyright notice that you
+ * may distribute with programs based on this work.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+package org.openscience.cdk.renderer.generators;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+import javax.vecmath.Point2d;
+
+import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IBond.Order;
+import org.openscience.cdk.renderer.AtomContainerRenderer;
+import org.openscience.cdk.renderer.RendererModel;
+import org.openscience.cdk.renderer.elements.CircularArrowElement;
+import org.openscience.cdk.renderer.elements.IRenderingElement;
+import org.openscience.cdk.renderer.font.AWTFontManager;
+import org.openscience.cdk.renderer.visitor.AWTDrawVisitor;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+
+/**
+ * @cdk.module test-renderextra
+ */
+public class CouplingGeneratorTest extends BasicAtomGeneratorTest {
+
+    private CouplingGenerator generator;
+
+    @Override
+    public Rectangle getCustomCanvas() {
+        return null;
+    }
+
+    @Before
+    @Override
+    public void setup() {
+        super.setup();
+        model.registerParameters(new BasicSceneGenerator());
+        model.registerParameters(new BasicBondGenerator());
+        this.generator = new CouplingGenerator();
+        model.registerParameters(generator);
+        super.setTestedGenerator(generator);
+    }
+
+    @Test
+    public void testEmptyContainer() throws IOException {
+        IAtomContainer container = makeSingleBond();
+        IAtom thirdatom=container.getBuilder().newAtom();
+        thirdatom.setPoint2d(new Point2d(1,0));
+        thirdatom.setSymbol("C");
+        IBond bond=builder.newBond();
+        bond.setAtom(container.getAtom(0), 0);
+        bond.setAtom(thirdatom, 1);
+        bond.setOrder(Order.DOUBLE);
+        IBond bond2=builder.newBond();
+        bond2.setAtom(container.getAtom(1), 0);
+        bond2.setAtom(thirdatom, 1);
+        bond2.setOrder(Order.DOUBLE);
+        container.addAtom(thirdatom);
+        container.addBond(bond);
+        container.addBond(bond2);
+        
+        Map<Color,List<IBond>> couplings=new HashMap<>();
+        couplings.put(Color.RED, new ArrayList<IBond>());
+        couplings.get(Color.RED).add(container.getBond(0));
+        couplings.get(Color.RED).add(container.getBond(0));
+        container.setProperty("couplings", couplings);
+        container.removeBond(container.getBond(0));
+
+        // generate the single line element
+        IRenderingElement root = generator.generate(container, model);
+        List<IRenderingElement> elements = elementUtil.getAllSimpleElements(root);
+        Assert.assertEquals(2, elements.size());
+
+        // test that the endpoints are distinct
+        CircularArrowElement line = (CircularArrowElement) elements.get(0);
+        System.out.println(elementUtil.getAllSimpleElements(root).get(0));
+        System.out.println(elementUtil.getAllSimpleElements(root).get(1));
+        //Assert.assertEquals(0d, line.centreY,0.1);
+        //Assert.assertEquals(0.8660254037844386, line.centreX,0.1);
+
+    
+    
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
+        generators.add(new BasicBondGenerator());
+        generators.add(new BasicAtomGenerator());
+        generators.add(generator);
+        generators.add(new BasicSceneGenerator());
+        AtomContainerRenderer renderer = new AtomContainerRenderer(generators,new AWTFontManager());
+        RendererModel r2dm = renderer.getRenderer2DModel();
+        r2dm.registerParameters(new AtomNumberGenerator());
+        int number=5;
+        int moleculewidth = number*100;
+        int moleculeheight = number*100;
+        Rectangle drawArea = new Rectangle(moleculewidth, moleculeheight);
+        
+
+        renderer.setup(container, drawArea);
+
+        DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
+        Document document = domImpl.createDocument(null, "svg", null);
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+        svgGenerator.setBackground(Color.WHITE);
+        svgGenerator.setColor(Color.BLACK);
+        svgGenerator.fill(new Rectangle(0, 0, moleculewidth, moleculeheight));
+        renderer.paint(container, new AWTDrawVisitor(svgGenerator), drawArea, false);
+        boolean useCSS = false;
+        baos = new ByteArrayOutputStream();
+        Writer outwriter = new OutputStreamWriter(baos, "UTF-8");
+        svgGenerator.stream(outwriter, useCSS);
+        System.out.println(baos.toString());
+
+        
+        BufferedImage bi=new BufferedImage(500,500,BufferedImage.TYPE_BYTE_BINARY);
+        renderer.paint(container, new AWTDrawVisitor((Graphics2D)bi.getGraphics()));
+
+        File outputfile = new File("/tmp/saved.png");
+        ImageIO.write(bi, "png", outputfile);
+    }
+
+}
