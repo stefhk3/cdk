@@ -587,11 +587,14 @@ public class MDLV2000Writer extends DefaultChemObjectWriter {
                 } else {
                     if (bond.getOrder() != null) {
                         switch (bond.getOrder()) {
+                        	case ZERO:
                             case SINGLE:
                             case DOUBLE:
                             case TRIPLE:
                                 if (writeAromaticBondTypes.isSet() && bond.isAromatic())
                                     bondType = 4;
+                                else if(bond.getOrder().numeric()==0)
+                                	bondType = 9;
                                 else
                                     bondType = bond.getOrder().numeric();
                                 break;

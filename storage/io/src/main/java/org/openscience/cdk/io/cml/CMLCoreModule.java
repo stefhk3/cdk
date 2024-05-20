@@ -1624,11 +1624,9 @@ public class CMLCoreModule implements ICMLModule {
                 }
 
                 if (coords.hasNext()) {
-                    //                    cdo.setObjectProperty("Bond", "stereo",
-                    //                                          (String)stereos.next());
-                    Object nextStereo = coords.next();
-                    if (nextStereo != null && ((boolean) nextStereo)) {
-                        currentBond.setStereo(IBond.Stereo.COORDINATION);
+                    Object nextCoord = coords.next();
+                    if (nextCoord != null && ((boolean) nextCoord)) {
+                        currentBond.setOrder(IBond.Order.ZERO);
                     }
                 }
 

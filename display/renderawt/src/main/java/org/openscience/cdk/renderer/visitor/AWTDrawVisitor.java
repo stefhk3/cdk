@@ -23,6 +23,7 @@ import org.openscience.cdk.renderer.elements.ArrowElement;
 import org.openscience.cdk.renderer.elements.AtomSymbolElement;
 import org.openscience.cdk.renderer.elements.Bounds;
 import org.openscience.cdk.renderer.elements.CircularArrowElement;
+import org.openscience.cdk.renderer.elements.DashedLineElement;
 import org.openscience.cdk.renderer.elements.ElementGroup;
 import org.openscience.cdk.renderer.elements.GeneralPath;
 import org.openscience.cdk.renderer.elements.IRenderingElement;
@@ -210,6 +211,32 @@ public class AWTDrawVisitor extends AbstractAWTDrawVisitor {
         graphics.setStroke(savedStroke);
     }
 
+    private void visit(DashedLineElement line) {
+        Stroke savedStroke = this.graphics.getStroke();
+
+        // scale the stroke by zoom + scale (both included in the AffineTransform)
+        float width = (float) (line.width * transform.getScaleX());
+        if (width < minStroke) width = minStroke;
+
+       	float[] dash = new float[]{0.06f * (float)transform.getScaleX()};
+        BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, dash, 0.0f);
+        this.graphics.setStroke(stroke);
+
+        double[] coordinates = new double[]{line.firstPointX, line.firstPointY, line.secondPointX, line.secondPointY};
+
+        graphics.setColor(line.color);
+        transform.transform(coordinates, 0, coordinates, 0, 2);
+        if (roundCoords) {
+            graphics.drawLine((int) Math.round(coordinates[0]), (int) Math.round(coordinates[1]),
+                              (int) Math.round(coordinates[2]), (int) Math.round(coordinates[3]));
+        } else {
+            graphics.draw(new Line2D.Double(coordinates[0], coordinates[1],
+                                            coordinates[2], coordinates[3]));
+        }
+        graphics.setStroke(savedStroke);
+    }
+
+    
     private void visit(OvalElement oval) {
         this.graphics.setColor(oval.color);
         int radius = scaleX(oval.radius);
@@ -701,6 +728,8 @@ public class AWTDrawVisitor extends AbstractAWTDrawVisitor {
             visit((WedgeLineElement) element);
         else if (element instanceof LineElement)
             visit((LineElement) element);
+        else if (element instanceof DashedLineElement)
+            visit((DashedLineElement) element);
         else if (element instanceof OvalElement)
             visit((OvalElement) element);
         else if (element instanceof TextGroupElement)

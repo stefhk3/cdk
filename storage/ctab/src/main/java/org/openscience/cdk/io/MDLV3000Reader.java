@@ -418,7 +418,7 @@ public class MDLV3000Reader extends DefaultChemObjectReader {
                     int order = Integer.parseInt(orderString);
                     if(order==9) {
                     	bond.setOrder(BondManipulator.createBondOrder(1));
-                    	bond.setStereo(IBond.Stereo.COORDINATION);
+                    	bond.setOrder(IBond.Order.ZERO);
                     }
                     else if (order >= 4) {
                         logger.warn("Query order types are not supported (yet). File a bug if you need it");

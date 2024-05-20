@@ -39,7 +39,7 @@ import org.openscience.cdk.interfaces.IRing;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.renderer.RendererModel;
 import org.openscience.cdk.renderer.RendererModel.ColorHash;
-import org.openscience.cdk.renderer.elements.ArrowElement;
+import org.openscience.cdk.renderer.elements.DashedLineElement;
 import org.openscience.cdk.renderer.elements.ElementGroup;
 import org.openscience.cdk.renderer.elements.IRenderingElement;
 import org.openscience.cdk.renderer.elements.LineElement;
@@ -317,7 +317,11 @@ public class BasicBondGenerator implements IGenerator<IAtomContainer> {
         Color color = this.getColorForBond(bond, model);
         double bondWidth = this.getWidthForBond(bond, model);
         double bondDistance = (Double) model.get(BondDistance.class) / model.getParameter(Scale.class).getValue();
-        if (type == IBond.Order.SINGLE) {
+        if(type == IBond.Order.ZERO) {
+        	return new DashedLineElement(point1.x, point1.y, point2.x, point2.y, bondWidth, color);
+        	//return new ArrowElement(bond.getAtom(0).getPoint2d().x, bond.getAtom(0).getPoint2d().y, bond.getAtom(1).getPoint2d().x, bond.getAtom(1).getPoint2d().y, 1 / model.getParameter(
+                    //Scale.class).getValue(), true, getColorForBond(bond, model));
+        } else if (type == IBond.Order.SINGLE) {
             return new LineElement(point1.x, point1.y, point2.x, point2.y, bondWidth, color);
         } else {
             ElementGroup group = new ElementGroup();
@@ -434,10 +438,6 @@ public class BasicBondGenerator implements IGenerator<IAtomContainer> {
             type = WedgeLineElement.TYPE.INDIFF;
         if (stereo == IBond.Stereo.DOWN_INVERTED || stereo == IBond.Stereo.UP_INVERTED
                 || stereo == IBond.Stereo.UP_OR_DOWN_INVERTED) dir = Direction.toFirst;
-        if(stereo == IBond.Stereo.COORDINATION)
-        	 return new ArrowElement(bond.getAtom(0).getPoint2d().x, bond.getAtom(0).getPoint2d().y, bond.getAtom(1).getPoint2d().x, bond.getAtom(1).getPoint2d().y, 1 / model.getParameter(
-                     Scale.class).getValue(), true, getColorForBond(bond, model));
-
         IRenderingElement base = generateBondElement(bond, IBond.Order.SINGLE, model);
         return new WedgeLineElement((LineElement) base, type, dir, getColorForBond(bond, model));
     }

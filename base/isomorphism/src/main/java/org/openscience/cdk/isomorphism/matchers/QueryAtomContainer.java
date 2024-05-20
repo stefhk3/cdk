@@ -942,7 +942,7 @@ public class QueryAtomContainer extends QueryChemObject implements IQueryAtomCon
     public Order getMaximumBondOrder(IAtom atom) {
         IBond.Order max = IBond.Order.SINGLE;
         for (int i = 0; i < bondCount; i++) {
-            if (bonds[i].contains(atom) && bonds[i].getOrder().ordinal() > max.ordinal()) {
+            if (bonds[i].contains(atom) && bonds[i].getOrder().ordinal() > max.ordinal()+1) {
                 max = bonds[i].getOrder();
             }
         }
@@ -960,7 +960,7 @@ public class QueryAtomContainer extends QueryChemObject implements IQueryAtomCon
     public Order getMinimumBondOrder(IAtom atom) {
         IBond.Order min = IBond.Order.QUADRUPLE;
         for (int i = 0; i < bondCount; i++) {
-            if (bonds[i].contains(atom) && bonds[i].getOrder().ordinal() < min.ordinal()) {
+            if (bonds[i].contains(atom) && bonds[i].getOrder().ordinal() < min.ordinal()+1) {
                 min = bonds[i].getOrder();
             }
         }

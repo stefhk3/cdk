@@ -40,7 +40,7 @@ public interface IBond extends IElectronContainer {
      * A list of permissible bond orders.
      */
     enum Order {
-        SINGLE(1), DOUBLE(2), TRIPLE(3), QUADRUPLE(4), QUINTUPLE(5), SEXTUPLE(6), UNSET(0);
+       ZERO(0), SINGLE(1), DOUBLE(2), TRIPLE(3), QUADRUPLE(4), QUINTUPLE(5), SEXTUPLE(6), UNSET(0);
 
         private final Integer bondedElectronPairs;
 
@@ -128,9 +128,7 @@ public interface IBond extends IElectronContainer {
          * Indication that this double bond has a fixed configuration, defined
          * by the 2D and/or 3D coordinates.
          */
-        E_Z_BY_COORDINATES,
-        
-        COORDINATION
+        E_Z_BY_COORDINATES
     }
 
     /**
