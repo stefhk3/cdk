@@ -566,5 +566,23 @@ public class HOSECodeGeneratorTest extends CDKTestCase {
         Assert.assertEquals("H", atoms.get(0).getSymbol());
         Assert.assertEquals("Br", atoms.get(1).getSymbol());
     }
+    
+    @Test
+    public void testSymmetryAndStop() throws Exception {
+        String filename = "data/mdl/symmetryandstopinhose.mol";
+        InputStream ins = this.getClass().getClassLoader().getResourceAsStream(filename);
+        MDLV2000Reader reader = new MDLV2000Reader(ins, Mode.STRICT);
+        IAtomContainer molecule = reader.read(DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainer.class));
+        reader.close();
+        HOSECodeGenerator hcg = new HOSECodeGenerator();
+        //Note that those two atoms are symmetrical
+        String hose1=hcg.getHOSECode(molecule, molecule.getAtom(11), 6, true);
+        String hose2=hcg.getHOSECode(molecule, molecule.getAtom(12), 6, true);
+        Assert.assertEquals(hose1, hose2);
+        //and so are those
+        hose1=hcg.getHOSECode(molecule, molecule.getAtom(13), 6, true);
+        hose2=hcg.getHOSECode(molecule, molecule.getAtom(14), 6, true);
+        Assert.assertEquals(hose1, hose2);
+    }
 
 }
